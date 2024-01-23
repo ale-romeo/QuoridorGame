@@ -47,7 +47,7 @@ void StartGame(uint16_t Color, uint16_t bkColor) {
 	wall_warning = false;
 	opponent_ready = false;
 	int0_pressed = false;
-	opponentMoveUint = 0xFF000000;
+	opponentMoveUint = 0x0;
 	CurrentPlayer = UNKNOWN;
 	OpponentPlayer = UNKNOWN;
 	mode = FROZEN;
@@ -119,6 +119,7 @@ void Game_SingleBoard_Human(void){
 		
 		while (timer > 0)
 			enable_timer(0);
+		disable_timer(0);
 		
 		if(mode==MOVEWALL){
 			LCD_ClearMovingWalls(&mainBoard);
@@ -145,7 +146,7 @@ void Game_SingleBoard_Human(void){
 
 void Game_TwoBoard_Human(void){	
 	if((turn == 0 && CurrentPlayer == PLAYER1) || (turn == 1 && CurrentPlayer == PLAYER2)){
-		ResetMove(&playerMove, CurrentPlayer);
+		ResetMove(&playerMove, turn);
 		
 		if(CheckWin(&mainBoard, OpponentPlayer))
 			EndGame(OpponentPlayer, Gold, RichGreen);
@@ -163,6 +164,7 @@ void Game_TwoBoard_Human(void){
 			
 			while (timer > 0)
 				enable_timer(0);
+			disable_timer(0);
 			
 			if(mode==MOVEWALL){
 				LCD_ClearMovingWalls(&mainBoard);
@@ -201,6 +203,7 @@ void Game_TwoBoard_Human(void){
 			
 			while(opponentMoveUint == 0x0 || opponentMoveUint == 0xFF000000)
 				enable_timer(0);
+			disable_timer(0);
 			
 			opponentMove = getMoveFromUint(opponentMoveUint);
 						
@@ -237,6 +240,7 @@ void Game_SingleBoard_NPC(void){
 			
 			while (timer > 0)
 				enable_timer(0);
+			disable_timer(0);
 			
 			if(mode==MOVEWALL){
 				LCD_ClearMovingWalls(&mainBoard);
@@ -265,6 +269,9 @@ void Game_SingleBoard_NPC(void){
 			EndGame(CurrentPlayer, Gold, RichGreen);
 		else{
 			srand(LPC_TIM1->TC);
+			timer = 20;
+			LCD_SetTimer(timer, Gold, RichGreen);
+			LCD_SetTimer(--timer, Gold, RichGreen);
 			MakeNPCMove(&mainBoard, OpponentPlayer);
 			if(mode == MOVEPLAYER){
 				LCD_MakeEmpty(&mainBoard);
@@ -283,10 +290,14 @@ void Game_SingleBoard_NPC(void){
 void Game_TwoBoard_NPC(void){
 	enable_timer(1);
 	if((turn == 0 && CurrentPlayer == PLAYER1) || (turn == 1 && CurrentPlayer == PLAYER2)){
+		ResetMove(&playerMove, turn);
 		if(CheckWin(&mainBoard, OpponentPlayer))
 			EndGame(OpponentPlayer, Gold, RichGreen);
 		else{
 			srand(LPC_TIM1->TC);
+			timer = 20;
+			LCD_SetTimer(timer, Gold, RichGreen);
+			LCD_SetTimer(--timer, Gold, RichGreen);
 			MakeNPCMove(&mainBoard, CurrentPlayer);
 			if(mode == MOVEPLAYER){
 				LCD_MakeEmpty(&mainBoard);
@@ -323,6 +334,7 @@ void Game_TwoBoard_NPC(void){
 			
 			while(opponentMoveUint == 0x0 || opponentMoveUint == 0xAA000000)
 				enable_timer(0);
+			disable_timer(0);
 			
 			opponentMove = getMoveFromUint(opponentMoveUint);
 						

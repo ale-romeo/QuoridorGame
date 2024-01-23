@@ -38,12 +38,6 @@ void CAN_IRQHandler (void)  {
 		CAN_rdMsg (1, &CAN_RxMsg);	                		/* Read the message */
     LPC_CAN1->CMR = (1 << 2);                    		/* Release receive buffer */
 		
-		opponentMoveUint = (CAN_RxMsg.data[0] << 24) |
-											(CAN_RxMsg.data[1] << 16) |
-                      (CAN_RxMsg.data[2] << 8) |
-                      CAN_RxMsg.data[3];
-		if(opponentMoveUint == 0xAA000000)
-			opponent_ready = true;
   }
 	else
 		if (icr & (1 << 1)) {                         /* CAN Controller #1 meassage is transmitted */

@@ -23,6 +23,15 @@ Move getMoveFromUint(uint32_t moveUint) {
     return move;
 }
 
+//Reset della mossa (Move)
+void ResetMove(Move* move, unsigned int pID){
+	move->playerID = (uint8_t) pID;
+	move->moveType = (uint8_t) 0;
+	move->wallOrientation = (uint8_t) 1;
+	move->newXPos = (uint8_t) 0;
+	move->newYPos = (uint8_t) 0;
+}
+
 //Invia ping tramite CAN2 con id 1
 void SendPing(void){
 	Move ping;

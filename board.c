@@ -9,6 +9,7 @@ extern Mode mode;
 
 Visit visited[7][7];
 int score[7][7];
+NPCMode NPC_mode;
 
 bool valid_wall = true;
 
@@ -777,17 +778,48 @@ void bestPathNPC(testBoard* board, StateCell NPC, int *best_distance, int depth)
 	return;
 }
 
+void reset_testBoard(testBoard* board){
+	UnsetSelMoves(board);
+	UnsetPossMoves(board);
+	memset(score, -1, sizeof(score));
+}
+
 void MakeNPCMove(Board* board, StateCell NPC){
-	int i, j, choice, x_player, y_player, distance = 50, sel_wall_x, sel_wall_y;
-	testBoard test;
-	StateCell player = (NPC == PLAYER2) ? PLAYER1 : PLAYER2;
+	int i, j, choice, x_player, y_player, sel_wall_x = 0, sel_wall_y = 0;
+	int val_NPC = 50, val_player = 50, distance = 50, temp_distNPC, temp_distP;
 	int NPCWalls = (NPC == PLAYER1) ? P1Walls : P2Walls;
+	StateCell player = (NPC == PLAYER2) ? PLAYER1 : PLAYER2;
+	testBoard testNPC;
+	copyBoard(&testNPC, board);
+	memset(score, -1, sizeof(score));
+	
 	if(NPCWalls == 0)
 		choice = 1;
-	else if(NPCWalls > 0)
-		choice = rand() % 2;
+	else if(NPCWalls > 0){
+		if(NPC_mode == EASY)
+			choice = rand()%2;
+		else if(NPC_mode == HARD){
+			testcalcPossMovesPlayer(&testNPC, player);
+			bestPathNPC(&testNPC, player, &val_player, 0);
+			reset_testBoard(&testNPC);
+			testcalcPossMovesPlayer(&testNPC, NPC);
+			bestPathNPC(&testNPC, NPC, &val_NPC, 0);
+			
+			if(val_player	< val_NPC){
+				choice = 0;
+				temp_distP = val_player;
+				temp_distNPC = val_NPC;
+			}
+			else{
+				choice = 1;
+				val_NPC = 50;
+				reset_testBoard(&testNPC);
+			}
+		}
+	}
 	if(choice == 0){
 		mode = MOVEWALL;
+		
 		for(i=1; i<DIM; i+=2){
 			for(j=1; j<DIM; j+=2){
 				if(board->cells[i][j].state == player){
@@ -796,23 +828,54 @@ void MakeNPCMove(Board* board, StateCell NPC){
 				}
 			}
 		}
+		
 		for(i=0; i<DIM; i++){
 			for(j=0; j<DIM; j++){
 				if(board->cells[i][j].state == NOWALL){
 					if(board->cells[i][j].orWall == HORIZONTAL){
-						if(board->cells[i][j].state == NOWALL && board->cells[i+1][j].state == NOWALL && board->cells[i+2][j].state == NOWALL){
+						if(board->cells[i+1][j].state == NOWALL && board->cells[i+2][j].state == NOWALL){
 							board->cells[i][j].wallState = MOVING;
 							board->cells[i+1][j].wallState = MOVING;
 							board->cells[i+2][j].wallState = MOVING;
-							if((abs(i-x_player)+abs(j-y_player)) < distance && CheckValidWall(board)){
-								distance = abs(i-x_player)+abs(j-y_player);
-								sel_wall_x = i;
-								sel_wall_y = j;
-							}
-							else if((abs(i-x_player)+abs(j-y_player)) == distance && ((j > y_player && sel_wall_y-y_player > j-y_player && player == PLAYER2) || (j < y_player && y_player-((sel_wall_y == y_player) ? -2 : sel_wall_y) > y_player-j && player == PLAYER1)) && CheckValidWall(board)){
-								distance = abs(i-x_player)+abs(j-y_player);
-								sel_wall_x = i;
-								sel_wall_y = j;
+							if(CheckValidWall(board)){
+								if(NPC_mode == EASY){
+									if((abs(i-x_player)+abs(j-y_player)) < distance){
+										distance = abs(i-x_player)+abs(j-y_player);
+										sel_wall_x = i;
+										sel_wall_y = j;
+									}
+									else if((abs(i-x_player)+abs(j-y_player)) == distance && 
+													((j > y_player && sel_wall_y-y_player > j-y_player && player == PLAYER2) || 
+														(j < y_player && y_player-((sel_wall_y == y_player) ? -2 : sel_wall_y) > y_player-j && player == PLAYER1))){
+										distance = abs(i-x_player)+abs(j-y_player);
+										sel_wall_x = i;
+										sel_wall_y = j;
+									}
+								}
+								else if(NPC_mode == HARD){
+									val_player = 50;
+									val_NPC = 50;
+									
+									reset_testBoard(&testNPC);
+									(&testNPC)->cells[i][j].state = WALL;
+									(&testNPC)->cells[i+1][j].state = WALL;
+									(&testNPC)->cells[i+2][j].state = WALL;
+			
+									testcalcPossMovesPlayer(&testNPC, player);
+									bestPathNPC(&testNPC, player, &val_player, 0);
+									reset_testBoard(&testNPC);
+									testcalcPossMovesPlayer(&testNPC, NPC);
+									bestPathNPC(&testNPC, NPC, &val_NPC, 0);
+									
+									(&testNPC)->cells[i][j].state = NOWALL;
+									(&testNPC)->cells[i+1][j].state = NOWALL;
+									(&testNPC)->cells[i+2][j].state = NOWALL;
+									if(val_player > temp_distP && (val_NPC == temp_distNPC || val_NPC < val_player)){
+										sel_wall_x = i;
+										sel_wall_y = j;
+										temp_distP = val_player;
+									}
+								}
 							}
 							board->cells[i][j].wallState = NOTMOVING;
 							board->cells[i+1][j].wallState = NOTMOVING;
@@ -824,10 +887,36 @@ void MakeNPCMove(Board* board, StateCell NPC){
 							board->cells[i][j].wallState = MOVING;
 							board->cells[i][j+1].wallState = MOVING;
 							board->cells[i][j+2].wallState = MOVING;
-							if((abs(i-x_player)+abs(j-y_player)) < distance && CheckValidWall(board)){
-								distance = abs(i-x_player)+abs(j-y_player);
-								sel_wall_x = i;
-								sel_wall_y = j;
+							if(CheckValidWall(board)){
+								if(NPC_mode == EASY && (abs(i-x_player)+abs(j-y_player)) < distance){
+									distance = abs(i-x_player)+abs(j-y_player);
+									sel_wall_x = i;
+									sel_wall_y = j;
+								}
+								else if(NPC_mode == HARD){
+									val_player = 50;
+									val_NPC = 50;
+									
+									reset_testBoard(&testNPC);
+									(&testNPC)->cells[i][j].state = WALL;
+									(&testNPC)->cells[i][j+1].state = WALL;
+									(&testNPC)->cells[i][j+2].state = WALL;
+			
+									testcalcPossMovesPlayer(&testNPC, player);
+									bestPathNPC(&testNPC, player, &val_player, 0);
+									reset_testBoard(&testNPC);
+									testcalcPossMovesPlayer(&testNPC, NPC);
+									bestPathNPC(&testNPC, NPC, &val_NPC, 0);
+									
+									(&testNPC)->cells[i][j].state = NOWALL;
+									(&testNPC)->cells[i][j+1].state = NOWALL;
+									(&testNPC)->cells[i][j+2].state = NOWALL;
+									if(val_player > temp_distP && (val_NPC == temp_distNPC || val_NPC < val_player)){
+										sel_wall_x = i;
+										sel_wall_y = j;
+										temp_distP = val_player;
+									}
+								}
 							}
 							board->cells[i][j].wallState = NOTMOVING;
 							board->cells[i][j+1].wallState = NOTMOVING;
@@ -837,37 +926,37 @@ void MakeNPCMove(Board* board, StateCell NPC){
 				}
 			}
 		}
-		if(board->cells[sel_wall_x][sel_wall_y].orWall == HORIZONTAL){
-			board->cells[sel_wall_x][sel_wall_y].wallState = MOVING;
-			board->cells[sel_wall_x+1][sel_wall_y].wallState = MOVING;
-			board->cells[sel_wall_x+2][sel_wall_y].wallState = MOVING;
-			or_wall = 1;
-			new_x_pos = (sel_wall_x - 1) / 2;
-			new_y_pos = (sel_wall_y - 2) / 2;
+		if(sel_wall_x == 0 && sel_wall_y == 0){
+			choice = 1;
+			val_NPC = 50;
+			reset_testBoard(&testNPC);
 		}
-		else if(board->cells[sel_wall_x][sel_wall_y].orWall == VERTICAL){
-			board->cells[sel_wall_x][sel_wall_y].wallState = MOVING;
-			board->cells[sel_wall_x][sel_wall_y+1].wallState = MOVING;
-			board->cells[sel_wall_x][sel_wall_y+2].wallState = MOVING;
-			or_wall = 0;
-			new_x_pos = (sel_wall_x - 2) / 2;
-			new_y_pos = (sel_wall_y - 1) / 2;
+		else{
+			if(board->cells[sel_wall_x][sel_wall_y].orWall == HORIZONTAL){
+				board->cells[sel_wall_x][sel_wall_y].wallState = MOVING;
+				board->cells[sel_wall_x+1][sel_wall_y].wallState = MOVING;
+				board->cells[sel_wall_x+2][sel_wall_y].wallState = MOVING;
+				or_wall = 1;
+				new_x_pos = (sel_wall_x - 1) / 2;
+				new_y_pos = (sel_wall_y - 2) / 2;
+			}
+			else if(board->cells[sel_wall_x][sel_wall_y].orWall == VERTICAL){
+				board->cells[sel_wall_x][sel_wall_y].wallState = MOVING;
+				board->cells[sel_wall_x][sel_wall_y+1].wallState = MOVING;
+				board->cells[sel_wall_x][sel_wall_y+2].wallState = MOVING;
+				or_wall = 0;
+				new_x_pos = (sel_wall_x - 2) / 2;
+				new_y_pos = (sel_wall_y - 1) / 2;
+			}
 		}
 	}
 	if(choice == 1){
 		mode = MOVEPLAYER;
-		copyBoard(&test, board);
-		
-		for(i=0; i<7; i++){
-			for(j=0; j<7; j++){
-				score[i][j] = -1;
-			}
-		}
-		testcalcPossMovesPlayer(&test, NPC);
-		bestPathNPC(&test, NPC, &distance, 0);
+		testcalcPossMovesPlayer(&testNPC, NPC);
+		bestPathNPC(&testNPC, NPC, &val_NPC, 0);
 		for(i=1; i<DIM; i+=2){
 			for(j=1; j<DIM; j+=2){
-				if((&test)->cells[i][j].state == SELMOVE){
+				if((&testNPC)->cells[i][j].state == SELMOVE){
 					board->cells[i][j].state = SELMOVE;
 					new_x_pos = (i - 1) / 2;
 					new_y_pos = (j - 1) / 2;
@@ -875,20 +964,6 @@ void MakeNPCMove(Board* board, StateCell NPC){
 			}
 		}
 		ConfirmMovePlayer(board, NPC);
-		for(i=1; i<DIM; i+=2){
-			for(j=1; j<DIM; j+=2){
-				if(board->cells[i][j].state == POSSMOVE)
-					board->cells[i][j].state = EMPTY;
-			}
-		}
 	}
 }
 
-//Reset della mossa (Move)
-void ResetMove(Move* move, StateCell player){
-	move->playerID = (uint8_t) (player == PLAYER1) ? 0 : 1;
-	move->moveType = (uint8_t) 0;
-	move->wallOrientation = (uint8_t) 1;
-	move->newXPos = (uint8_t) 0;
-	move->newYPos = (uint8_t) 0;
-}

@@ -53,6 +53,7 @@ void CAN_wrFilter      (uint32_t ctrl, uint32_t id, uint8_t filter_type);
 void CAN_Init 				 (void);
 uint32_t createMoveUint(Move* move);
 Move getMoveFromUint	 (uint32_t moveUint);
+void ResetMove(Move* move, unsigned int pID);
 void SendPing					 (void);
 void SendHandshake		 (void);
 void SendMove					 (uint32_t moveUint);

@@ -1077,7 +1077,8 @@ void LCD_DrawMenuGameMode(BoardType selectedBoardType, uint16_t Color, uint16_t 
 		GUI_Text(95, 80, (uint8_t *) "player", Color, bkColor);
 	
 	LCD_DrawHumanBox(Color, bkColor);
-	LCD_DrawNPCBox(Color, bkColor);
+	LCD_DrawNPCLeftBox(Color, bkColor);
+	LCD_DrawNPCRightBox(Color, bkColor);
 }
 
 void LCD_DrawHumanBox(uint16_t Color, uint16_t bkColor){
@@ -1089,13 +1090,26 @@ void LCD_DrawHumanBox(uint16_t Color, uint16_t bkColor){
 	GUI_Text((uint16_t) 101, menu_y_pos+13, (uint8_t *) "Human", Color, bkColor);
 }
 
-void LCD_DrawNPCBox(uint16_t Color, uint16_t bkColor){
+void LCD_DrawNPCLeftBox(uint16_t Color, uint16_t bkColor){
 	int menu_y_pos = 220;
-	LCD_DrawLine((uint16_t) 40, menu_y_pos, (uint16_t) 200, menu_y_pos, Color);
-	LCD_DrawLine((uint16_t) 40, menu_y_pos, (uint16_t) 40, menu_y_pos+40, Color);
-	LCD_DrawLine((uint16_t) 40, menu_y_pos+40, (uint16_t) 200, menu_y_pos+40, Color);
-	LCD_DrawLine((uint16_t) 200, menu_y_pos, (uint16_t) 200, menu_y_pos+40, Color);
-	GUI_Text((uint16_t) 110, menu_y_pos+13, (uint8_t *) "NPC", Color, bkColor);
+	LCD_DrawLine((uint16_t) 40, menu_y_pos, (uint16_t) 115, menu_y_pos, Color);
+	LCD_DrawLine((uint16_t) 40, menu_y_pos, (uint16_t) 40, menu_y_pos+60, Color);
+	LCD_DrawLine((uint16_t) 40, menu_y_pos+60, (uint16_t) 115, menu_y_pos+60, Color);
+	LCD_DrawLine((uint16_t) 115, menu_y_pos, (uint16_t) 115, menu_y_pos+60, Color);
+	GUI_Text((uint16_t) 67, menu_y_pos+10, (uint8_t *) "NPC", Color, bkColor);
+	GUI_Text((uint16_t) 65, menu_y_pos+25, (uint8_t *) "easy", Color, bkColor);
+	GUI_Text((uint16_t) 65, menu_y_pos+40, (uint8_t *) "mode", Color, bkColor);
+}
+
+void LCD_DrawNPCRightBox(uint16_t Color, uint16_t bkColor){
+	int menu_y_pos = 220;
+	LCD_DrawLine((uint16_t) 125, menu_y_pos, (uint16_t) 200, menu_y_pos, Color);
+	LCD_DrawLine((uint16_t) 125, menu_y_pos, (uint16_t) 125, menu_y_pos+60, Color);
+	LCD_DrawLine((uint16_t) 125, menu_y_pos+60, (uint16_t) 200, menu_y_pos+60, Color);
+	LCD_DrawLine((uint16_t) 200, menu_y_pos, (uint16_t) 200, menu_y_pos+60, Color);
+	GUI_Text((uint16_t) 152, menu_y_pos+10, (uint8_t *) "NPC", Color, bkColor);
+	GUI_Text((uint16_t) 150, menu_y_pos+25, (uint8_t *) "hard", Color, bkColor);
+	GUI_Text((uint16_t) 150, menu_y_pos+40, (uint8_t *) "mode", Color, bkColor);
 }
 
 void LCD_DrawSingleBoardBox(uint16_t Color, uint16_t bkColor){

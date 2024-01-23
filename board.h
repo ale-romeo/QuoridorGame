@@ -34,6 +34,11 @@ typedef enum {
 } GameMode;
 
 typedef enum {
+	EASY,
+	HARD
+} NPCMode;
+
+typedef enum {
 	FROZEN,
 	MENU,
 	MOVEPLAYER,
@@ -126,4 +131,3 @@ bool CheckValidWall(Board* board);
 void bestPathNPC(testBoard* board, StateCell NPC, int *best_distance, int depth);
 void MakeOpponentMove(Board* board, Move* opponentMove);
 void MakeNPCMove(Board* board, StateCell NPC);
-void ResetMove(Move* move, StateCell player);

@@ -42,6 +42,7 @@ extern StateCell OpponentPlayer;
 extern Move playerMove;
 extern BoardType selectedBoardType;
 extern GameMode selectedGameMode;
+extern NPCMode NPC_mode;
 
 extern Mode mode;
 extern uint32_t opponentMoveUint;
@@ -59,6 +60,8 @@ void RIT_IRQHandler (void)
 	static int J_up_right = 0;
 	static bool move_selected = false;
 	static bool menu_sel_down = false;
+	static bool menu_sel_down_left = false;
+	static bool menu_sel_down_right = false;
 	static bool menu_sel_up = false;
 	static bool multiplayer_warning = false;
 	
@@ -74,15 +77,27 @@ void RIT_IRQHandler (void)
 							LPC_RIT->RICTRL |= 0x1;
 							selectedGameMode = Human;
 						}
-						if(menu_sel_down){
+						if(menu_sel_down_right){
 							LPC_RIT->RICTRL |= 0x1;
 							selectedGameMode = NPC;
+							NPC_mode = HARD;
+							if(selectedBoardType == SingleBoard){
+								CurrentPlayer = PLAYER1;
+								OpponentPlayer = PLAYER2;
+							}
+						}
+						if(menu_sel_down_left){
+							LPC_RIT->RICTRL |= 0x1;
+							selectedGameMode = NPC;
+							NPC_mode = EASY;
 							if(selectedBoardType == SingleBoard){
 								CurrentPlayer = PLAYER1;
 								OpponentPlayer = PLAYER2;
 							}
 						}
 						menu_sel_down = false;
+						menu_sel_down_right = false;
+						menu_sel_down_left = false;
 						menu_sel_up = false;
 						mode = MOVEPLAYER;
 					}
@@ -199,21 +214,12 @@ void RIT_IRQHandler (void)
 		J_down++;
 		switch(J_down){
 			case 1:
-				if(mode == MENU){
-					if(selectedBoardType == None){
-						if(menu_sel_up){
-							menu_sel_up = false;
-							LCD_DrawSingleBoardBox(Gold, RichGreen);
-						}
-						LCD_DrawTwoBoardBox(Red, RichGreen);
+				if(mode == MENU && selectedBoardType == None){
+					if(menu_sel_up){
+						menu_sel_up = false;
+						LCD_DrawSingleBoardBox(Gold, RichGreen);
 					}
-					if(selectedBoardType != None){
-						if(menu_sel_up){
-							menu_sel_up = false;
-							LCD_DrawHumanBox(Gold, RichGreen);
-						}
-						LCD_DrawNPCBox(Red, RichGreen);
-					}
+					LCD_DrawTwoBoardBox(Red, RichGreen);
 					menu_sel_down = true;
 				}
 				if(mode == MOVEPLAYER){
@@ -241,6 +247,18 @@ void RIT_IRQHandler (void)
 		J_down_left++;
 		switch(J_down_left){
 			case 1:
+				if(mode == MENU  && selectedBoardType != None){
+					if(menu_sel_up){
+						menu_sel_up = false;
+						LCD_DrawHumanBox(Gold, RichGreen);
+					}
+					if(menu_sel_down_right){
+						menu_sel_down_right = false;
+						LCD_DrawNPCRightBox(Gold, RichGreen);
+					}
+					LCD_DrawNPCLeftBox(Red, RichGreen);
+					menu_sel_down_left = true;
+				}
 				if(mode == MOVEPLAYER){
 					LCD_DeselMove(&mainBoard);
 					MovePlayerDownLeft(&mainBoard, CurrentPlayer);
@@ -260,6 +278,18 @@ void RIT_IRQHandler (void)
 		J_down_right++;
 		switch(J_down_right){
 			case 1:
+				if(mode == MENU && selectedBoardType != None){
+					if(menu_sel_up){
+						menu_sel_up = false;
+						LCD_DrawHumanBox(Gold, RichGreen);
+					}
+					if(menu_sel_down_left){
+						menu_sel_down_left = false;
+						LCD_DrawNPCLeftBox(Gold, RichGreen);
+					}
+					LCD_DrawNPCRightBox(Red, RichGreen);
+					menu_sel_down_right = true;
+				}
 				if(mode == MOVEPLAYER){
 					LCD_DeselMove(&mainBoard);
 					MovePlayerDownRight(&mainBoard, CurrentPlayer);
@@ -335,9 +365,13 @@ void RIT_IRQHandler (void)
 						LCD_DrawSingleBoardBox(Red, RichGreen);
 					}
 					if(selectedBoardType != None){
-						if(menu_sel_down){
-							menu_sel_down = false;
-							LCD_DrawNPCBox(Gold, RichGreen);
+						if(menu_sel_down_right){
+							menu_sel_down_right = false;
+							LCD_DrawNPCRightBox(Gold, RichGreen);
+						}
+						if(menu_sel_down_left){
+							menu_sel_down_left = false;
+							LCD_DrawNPCLeftBox(Gold, RichGreen);
 						}
 						LCD_DrawHumanBox(Red, RichGreen);
 					}
